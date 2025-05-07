@@ -1,0 +1,16 @@
+{
+  "name": "proyecto-arquitectura-de-computadoras",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node Server/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@serialport/parser-readline": "^13.0.0",
+    "serialport": "^13.0.0"
+  }
+}
