@@ -2,8 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const { SerialPort } = require('serialport');
-const { ReadlineParser } = require('@serialport/parser-readline');
 
 // Configuración de Express
 const app = express();
@@ -25,6 +23,68 @@ let lastData = {
   objectDetected: false,
   isOrganic: false
 };
+
+// Estadísticas de uso
+let stats = {
+  organic: 0,      // Contador para basura orgánica
+  recyclable: 0,   // Contador para basura reciclable
+  history: []      // Historial de depósitos
+};
+
+// *** MODO SIMULACIÓN PARA PRUEBAS SIN ARDUINO ***
+console.log('Ejecutando en modo de simulación...');
+
+// Simulador de datos para pruebas
+setInterval(() => {
+  // Simular cambios en los niveles
+  lastData.water += (Math.random() * 10) - 5;
+  lastData.water = Math.min(Math.max(lastData.water, 0), 100);
+  
+  lastData.distance -= (Math.random() * 2) - 0.5;
+  lastData.distance = Math.min(Math.max(lastData.distance, 5), 50);
+  
+  // Probabilidad de detección de objeto
+  if (Math.random() > 0.7) {
+    // Cambiar estado de detección
+    lastData.objectDetected = !lastData.objectDetected;
+    
+    // Si se detectó un objeto
+    if (lastData.objectDetected) {
+      lastData.isOrganic = Math.random() > 0.5;
+      
+      // Actualizar estadísticas
+      if (lastData.isOrganic) {
+        stats.organic++;
+      } else {
+        stats.recyclable++;
+      }
+      
+      // Agregar al historial
+      stats.history.push({
+        timestamp: new Date().toISOString(),
+        type: lastData.isOrganic ? 'organic' : 'recyclable'
+      });
+      
+      // Limitar el historial a 50 elementos
+      if (stats.history.length > 50) {
+        stats.history.shift();
+      }
+      
+      // Emitir estadísticas actualizadas
+      io.emit('statsUpdate', stats);
+    }
+  }
+  
+  // Emitir los datos simulados
+  io.emit('sensorData', lastData);
+}, 2000);
+
+/*
+// CÓDIGO PARA COMUNICACIÓN REAL CON ARDUINO
+// Para usar con Arduino real, comenta la sección de simulación y descomenta esta sección
+
+const { SerialPort } = require('serialport');
+const { ReadlineParser } = require('@serialport/parser-readline');
 
 // Función para analizar los datos del puerto serial
 function parseSerialData(data) {
@@ -51,11 +111,27 @@ function parseSerialData(data) {
     lastData.objectDetected = true;
     
     // Determinar si es orgánico o no
-    if (data.includes('Por favor, colócala corectamente')) {
-      lastData.isOrganic = false;
-    } else {
+    if (data.includes('Basura orgánica detectada')) {
       lastData.isOrganic = true;
+      stats.organic++;
+    } else {
+      lastData.isOrganic = false;
+      stats.recyclable++;
     }
+    
+    // Agregar al historial
+    stats.history.push({
+      timestamp: new Date().toISOString(),
+      type: lastData.isOrganic ? 'organic' : 'recyclable'
+    });
+    
+    // Limitar el historial a 50 elementos
+    if (stats.history.length > 50) {
+      stats.history.shift();
+    }
+    
+    // Emitir estadísticas actualizadas
+    io.emit('statsUpdate', stats);
   } else {
     lastData.objectDetected = false;
   }
@@ -64,26 +140,33 @@ function parseSerialData(data) {
   io.emit('sensorData', lastData);
 }
 
-// *** PARA PRUEBAS: MODO SIMULACIÓN ACTIVADO ***
-console.log('Ejecutando en modo de simulación...');
+// Configuración del puerto serial
+try {
+  const mySerial = new SerialPort({
+    path: 'COM3', // Cambiar a tu puerto (ej. /dev/ttyACM0 en Linux)
+    baudRate: 9600
+  });
 
-// Modo de simulación para probar sin Arduino
-setInterval(() => {
-  // Simular cambios en los datos
-  lastData.water += (Math.random() * 10) - 5;
-  lastData.water = Math.min(Math.max(lastData.water, 0), 100);
+  const parser = mySerial.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+
+  mySerial.on('open', () => {
+    console.log('Puerto Serial Abierto');
+  });
+
+  parser.on('data', (data) => {
+    console.log(data);
+    parseSerialData(data);
+  });
   
-  lastData.distance -= (Math.random() * 2) - 0.5;
-  lastData.distance = Math.min(Math.max(lastData.distance, 5), 50);
-  
-  if (Math.random() > 0.7) {
-    lastData.objectDetected = !lastData.objectDetected;
-    lastData.isOrganic = Math.random() > 0.5;
-  }
-  
-  // Emitir los datos simulados
-  io.emit('sensorData', lastData);
-}, 2000);
+  mySerial.on('error', (err) => {
+    console.error('Error en el puerto serial:', err.message);
+    console.log('Ejecutando en modo de simulación...');
+  });
+} catch (err) {
+  console.error('No se pudo abrir el puerto serial:', err.message);
+  console.log('Ejecutando en modo de simulación...');
+}
+*/
 
 // Conexión de Socket.io
 io.on('connection', (socket) => {
@@ -91,6 +174,9 @@ io.on('connection', (socket) => {
   
   // Enviar los últimos datos al cliente cuando se conecta
   socket.emit('sensorData', lastData);
+  
+  // Enviar estadísticas actuales
+  socket.emit('statsUpdate', stats);
   
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
