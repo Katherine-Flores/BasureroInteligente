@@ -10,6 +10,9 @@ const fillStatus = document.getElementById('fill-status');
 const objectIcon = document.getElementById('object-icon');
 const objectStatus = document.getElementById('object-status');
 
+const organicCount = document.getElementById('organic-count');
+const recyclableCount = document.getElementById('recyclable-count');
+
 const logContainer = document.getElementById('log-container');
 const clearLogBtn = document.getElementById('clear-log');
 
@@ -155,6 +158,36 @@ const statsChart = new Chart(ctx, {
     }
 });
 
+// Configuración del gráfico de uso
+const usageCtx = document.getElementById('usage-chart').getContext('2d');
+const usageChart = new Chart(usageCtx, {
+    type: 'pie',
+    data: {
+        labels: ['Orgánico', 'Reciclable'],
+        datasets: [{
+            data: [0, 0],
+            backgroundColor: [
+                'rgba(139, 195, 74, 0.7)',
+                'rgba(33, 150, 243, 0.7)'
+            ],
+            borderColor: [
+                'rgba(139, 195, 74, 1)',
+                'rgba(33, 150, 243, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
 // Actualizar el gráfico con nuevos datos
 function updateChart(fillLevel, waterLevel) {
     const now = new Date();
@@ -209,6 +242,22 @@ socket.on('sensorData', (data) => {
     
     // Registrar datos recibidos
     addLogEntry(`Agua: ${Math.round(data.water)}%, Distancia: ${Math.round(data.distance)}cm, Objeto: ${data.objectDetected ? 'Sí' : 'No'}`);
+});
+
+// Manejar actualizaciones de estadísticas
+socket.on('statsUpdate', (stats) => {
+    console.log('Estadísticas recibidas:', stats);
+    
+    // Actualizar contadores
+    organicCount.textContent = stats.organic;
+    recyclableCount.textContent = stats.recyclable;
+    
+    // Actualizar gráfico de uso
+    usageChart.data.datasets[0].data = [stats.organic, stats.recyclable];
+    usageChart.update();
+    
+    // Agregar entrada al registro
+    addLogEntry(`Estadísticas actualizadas - Orgánico: ${stats.organic}, Reciclable: ${stats.recyclable}`);
 });
 
 // Inicialización
