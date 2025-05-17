@@ -152,6 +152,36 @@
             grid-column: span 2;
         }
         
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f5f5f5;
+            width: 45%;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-icon i {
+            font-size: 2rem;
+        }
+        
         @media (max-width: 768px) {
             .stats-card {
                 grid-column: span 1;
@@ -257,11 +287,35 @@
             <div class="card stats-card">
                 <div class="card-header">
                     <i class="fas fa-chart-line"></i>
-                    <h2>Estadísticas</h2>
+                    <h2>Estadísticas de Llenado</h2>
                 </div>
                 <div class="card-content">
                     <div class="chart-container">
                         <canvas id="stats-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card stats-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie"></i>
+                    <h2>Uso por Tipo de Basura</h2>
+                </div>
+                <div class="card-content">
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <div class="stat-label">Orgánico</div>
+                            <div class="stat-value" id="organic-count">0</div>
+                            <div class="stat-icon"><i class="fas fa-apple-alt" style="color: #8bc34a;"></i></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Reciclable</div>
+                            <div class="stat-value" id="recyclable-count">0</div>
+                            <div class="stat-icon"><i class="fas fa-recycle" style="color: #2196F3;"></i></div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="usage-chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -286,278 +340,6 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <script>
-        // Simulación de datos para demostración
-        let simulationMode = true; // Cambiar a false cuando se conecte a datos reales
-        
-        // Elementos del DOM
-        const waterValue = document.getElementById('water-value');
-        const waterGauge = document.getElementById('water-gauge');
-        const waterStatus = document.getElementById('water-status');
-        
-        const fillValue = document.getElementById('fill-value');
-        const fillGauge = document.getElementById('fill-gauge');
-        const fillStatus = document.getElementById('fill-status');
-        
-        const objectIcon = document.getElementById('object-icon');
-        const objectStatus = document.getElementById('object-status');
-        
-        const logContainer = document.getElementById('log-container');
-        const clearLogBtn = document.getElementById('clear-log');
-        
-        // Función para actualizar el medidor de agua
-        function updateWaterGauge(value) {
-            const percentage = Math.min(Math.max(value, 0), 100);
-            const dashOffset = 126 - (percentage * 1.26);
-            waterGauge.style.strokeDashoffset = dashOffset;
-            waterValue.textContent = `${Math.round(percentage)}%`;
-            
-            if (percentage < 30) {
-                waterStatus.className = 'status success';
-                waterStatus.textContent = 'Seco';
-                waterGauge.style.stroke = '#2196F3';
-            } else if (percentage < 70) {
-                waterStatus.className = 'status warning';
-                waterStatus.textContent = 'Húmedo';
-                waterGauge.style.stroke = '#ff9800';
-            } else {
-                waterStatus.className = 'status danger';
-                waterStatus.textContent = 'Muy Húmedo';
-                waterGauge.style.stroke = '#f44336';
-            }
-        }
-        
-        // Función para actualizar el medidor de llenado
-        function updateFillGauge(distance) {
-            // Suponemos que el basurero tiene 50cm de altura
-            const maxDistance = 50;
-            // Convertimos la distancia a porcentaje de llenado (invertido)
-            let percentage = (1 - (distance / maxDistance)) * 100;
-            percentage = Math.min(Math.max(percentage, 0), 100);
-            
-            const dashOffset = 126 - (percentage * 1.26);
-            fillGauge.style.strokeDashoffset = dashOffset;
-            fillValue.textContent = `${Math.round(percentage)}%`;
-            
-            if (percentage < 50) {
-                fillStatus.className = 'status success';
-                fillStatus.textContent = 'Disponible';
-                fillGauge.style.stroke = '#4CAF50';
-            } else if (percentage < 80) {
-                fillStatus.className = 'status warning';
-                fillStatus.textContent = 'Medio lleno';
-                fillGauge.style.stroke = '#ff9800';
-            } else {
-                fillStatus.className = 'status danger';
-                fillStatus.textContent = '¡Casi lleno!';
-                fillGauge.style.stroke = '#f44336';
-            }
-        }
-        
-        // Función para actualizar el estado de detección de objetos
-        function updateObjectDetection(detected, organic) {
-            if (detected) {
-                objectIcon.style.color = '#4CAF50';
-                
-                if (organic !== undefined) {
-                    if (organic) {
-                        objectIcon.innerHTML = '<i class="fas fa-apple-alt"></i>';
-                        objectStatus.className = 'status success';
-                        objectStatus.textContent = 'Objeto Orgánico Detectado';
-                    } else {
-                        objectIcon.innerHTML = '<i class="fas fa-recycle"></i>';
-                        objectStatus.className = 'status warning';
-                        objectStatus.textContent = 'Objeto Reciclable Detectado';
-                    }
-                } else {
-                    objectIcon.innerHTML = '<i class="fas fa-box"></i>';
-                    objectStatus.className = 'status warning';
-                    objectStatus.textContent = 'Objeto Detectado';
-                }
-            } else {
-                objectIcon.style.color = '#ccc';
-                objectIcon.innerHTML = '<i class="fas fa-box"></i>';
-                objectStatus.className = 'status';
-                objectStatus.textContent = 'No se detecta objeto';
-            }
-        }
-        
-        // Función para agregar entradas al registro
-        function addLogEntry(message) {
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            
-            const timestamp = new Date().toLocaleTimeString();
-            entry.textContent = `[${timestamp}] ${message}`;
-            
-            logContainer.appendChild(entry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
-        
-        // Limpia el registro de eventos
-        clearLogBtn.addEventListener('click', () => {
-            logContainer.innerHTML = '';
-            addLogEntry('Registro limpiado');
-        });
-        
-        // Configuración del gráfico de estadísticas
-        const ctx = document.getElementById('stats-chart').getContext('2d');
-        const statsChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'Nivel de Llenado (%)',
-                        data: [],
-                        borderColor: '#4CAF50',
-                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Nivel de Agua (%)',
-                        data: [],
-                        borderColor: '#2196F3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: 'Porcentaje (%)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Tiempo'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Actualizar el gráfico con nuevos datos
-        function updateChart(fillLevel, waterLevel) {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString();
-            
-            if (statsChart.data.labels.length > 10) {
-                statsChart.data.labels.shift();
-                statsChart.data.datasets[0].data.shift();
-                statsChart.data.datasets[1].data.shift();
-            }
-            
-            statsChart.data.labels.push(timeString);
-            statsChart.data.datasets[0].data.push(fillLevel);
-            statsChart.data.datasets[1].data.push(waterLevel);
-            statsChart.update();
-        }
-        
-        // Modo de simulación para demostración
-        if (simulationMode) {
-            let waterLevel = 0;
-            let distance = 50; // cm (basurero vacío)
-            let objectDetected = false;
-            let isOrganic = false;
-            
-            // Simular cambios en los niveles
-            setInterval(() => {
-                // Simular cambio aleatorio en nivel de agua
-                waterLevel += (Math.random() * 10) - 5;
-                waterLevel = Math.min(Math.max(waterLevel, 0), 100);
-                
-                // Simular cambio en distancia (nivel de llenado)
-                distance -= (Math.random() * 2) - 0.5;
-                distance = Math.min(Math.max(distance, 5), 50);
-                
-                // Actualizar medidores
-                updateWaterGauge(waterLevel);
-                updateFillGauge(distance);
-                
-                // Actualizar gráfico
-                const fillLevel = (1 - (distance / 50)) * 100;
-                updateChart(fillLevel, waterLevel);
-                
-                // Simular detección de objetos ocasionalmente
-                if (Math.random() > 0.7) {
-                    objectDetected = !objectDetected;
-                    isOrganic = Math.random() > 0.5;
-                    updateObjectDetection(objectDetected, isOrganic);
-                    
-                    if (objectDetected) {
-                        addLogEntry(`Objeto ${isOrganic ? 'orgánico' : 'reciclable'} detectado`);
-                    } else {
-                        addLogEntry('No se detecta objeto');
-                    }
-                }
-                
-                // Simular mensajes aleatorios en el registro
-                if (Math.random() > 0.8) {
-                    const messages = [
-                        'Nivel de agua: ' + Math.round(waterLevel) + '%',
-                        'Distancia: ' + Math.round(distance) + ' cm',
-                        'Nivel de llenado: ' + Math.round((1 - (distance / 50)) * 100) + '%',
-                        'Verificando sensores...',
-                        'Sistema funcionando correctamente'
-                    ];
-                    addLogEntry(messages[Math.floor(Math.random() * messages.length)]);
-                }
-            }, 2000);
-            
-            // Inicialización
-            updateWaterGauge(waterLevel);
-            updateFillGauge(distance);
-            updateObjectDetection(objectDetected);
-            addLogEntry('Sistema iniciado en modo simulación');
-        } else {
-            // Código para conectar con datos reales a través de websockets
-            const socket = io();
-            
-            socket.on('connect', () => {
-                addLogEntry('Conectado al servidor de datos');
-            });
-            
-            socket.on('disconnect', () => {
-                addLogEntry('Desconectado del servidor de datos');
-            });
-            
-            socket.on('sensorData', (data) => {
-                // Actualizar UI con datos reales
-                if (data.water !== undefined) {
-                    updateWaterGauge(data.water);
-                }
-                
-                if (data.distance !== undefined) {
-                    updateFillGauge(data.distance);
-                    
-                    // Actualizar gráfico
-                    const fillLevel = (1 - (data.distance / 50)) * 100;
-                    updateChart(fillLevel, data.water || 0);
-                }
-                
-                if (data.objectDetected !== undefined) {
-                    updateObjectDetection(data.objectDetected, data.isOrganic);
-                    
-                    if (data.objectDetected) {
-                        addLogEntry(`Objeto ${data.isOrganic ? 'orgánico' : 'reciclable'} detectado`);
-                    }
-                }
-                
-                // Registrar datos recibidos
-                addLogEntry(JSON.stringify(data));
-            });
-        }
-    </script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
