@@ -1,11 +1,11 @@
 // Elementos del DOM
-const waterValue = document.getElementById('water-value');
-const waterGauge = document.getElementById('water-gauge');
-const waterStatus = document.getElementById('water-status');
+const organicValue = document.getElementById('organic-value');
+const organicGauge = document.getElementById('organic-gauge');
+const organicStatus = document.getElementById('organic-status');
 
-const fillValue = document.getElementById('fill-value');
-const fillGauge = document.getElementById('fill-gauge');
-const fillStatus = document.getElementById('fill-status');
+const recyclableValue = document.getElementById('recyclable-value');
+const recyclableGauge = document.getElementById('recyclable-gauge');
+const recyclableStatus = document.getElementById('recyclable-status');
 
 const objectIcon = document.getElementById('object-icon');
 const objectStatus = document.getElementById('object-status');
@@ -16,52 +16,53 @@ const recyclableCount = document.getElementById('recyclable-count');
 const logContainer = document.getElementById('log-container');
 const clearLogBtn = document.getElementById('clear-log');
 
-// Función para actualizar el medidor de agua
-function updateWaterGauge(value) {
-    const percentage = Math.min(Math.max(value, 0), 100);
-    const dashOffset = 126 - (percentage * 1.26);
-    waterGauge.style.strokeDashoffset = dashOffset;
-    waterValue.textContent = `${Math.round(percentage)}%`;
-    
-    if (percentage < 30) {
-        waterStatus.className = 'status success';
-        waterStatus.textContent = 'Seco';
-        waterGauge.style.stroke = '#2196F3';
-    } else if (percentage < 70) {
-        waterStatus.className = 'status warning';
-        waterStatus.textContent = 'Húmedo';
-        waterGauge.style.stroke = '#ff9800';
-    } else {
-        waterStatus.className = 'status danger';
-        waterStatus.textContent = 'Muy Húmedo';
-        waterGauge.style.stroke = '#f44336';
-    }
-}
-
-// Función para actualizar el medidor de llenado
-function updateFillGauge(distance) {
-    // Suponemos que el basurero tiene 50cm de altura
+// Función para actualizar el medidor del basurero orgánico
+function updateOrganicGauge(distance) {
     const maxDistance = 50;
-    // Convertimos la distancia a porcentaje de llenado (invertido)
     let percentage = (1 - (distance / maxDistance)) * 100;
     percentage = Math.min(Math.max(percentage, 0), 100);
     
     const dashOffset = 126 - (percentage * 1.26);
-    fillGauge.style.strokeDashoffset = dashOffset;
-    fillValue.textContent = `${Math.round(percentage)}%`;
+    organicGauge.style.strokeDashoffset = dashOffset;
+    organicValue.textContent = `${Math.round(percentage)}%`;
     
     if (percentage < 50) {
-        fillStatus.className = 'status success';
-        fillStatus.textContent = 'Disponible';
-        fillGauge.style.stroke = '#4CAF50';
+        organicStatus.className = 'status success';
+        organicStatus.textContent = 'Disponible';
+        organicGauge.style.stroke = '#4CAF50';
     } else if (percentage < 80) {
-        fillStatus.className = 'status warning';
-        fillStatus.textContent = 'Medio lleno';
-        fillGauge.style.stroke = '#ff9800';
+        organicStatus.className = 'status warning';
+        organicStatus.textContent = 'Medio lleno';
+        organicGauge.style.stroke = '#ff9800';
     } else {
-        fillStatus.className = 'status danger';
-        fillStatus.textContent = '¡Casi lleno!';
-        fillGauge.style.stroke = '#f44336';
+        organicStatus.className = 'status danger';
+        organicStatus.textContent = '¡Casi lleno!';
+        organicGauge.style.stroke = '#f44336';
+    }
+}
+
+// Función para actualizar el medidor del basurero reciclable
+function updateRecyclableGauge(distance) {
+    const maxDistance = 50;
+    let percentage = (1 - (distance / maxDistance)) * 100;
+    percentage = Math.min(Math.max(percentage, 0), 100);
+    
+    const dashOffset = 126 - (percentage * 1.26);
+    recyclableGauge.style.strokeDashoffset = dashOffset;
+    recyclableValue.textContent = `${Math.round(percentage)}%`;
+    
+    if (percentage < 50) {
+        recyclableStatus.className = 'status success';
+        recyclableStatus.textContent = 'Disponible';
+        recyclableGauge.style.stroke = '#2196F3';
+    } else if (percentage < 80) {
+        recyclableStatus.className = 'status warning';
+        recyclableStatus.textContent = 'Medio lleno';
+        recyclableGauge.style.stroke = '#ff9800';
+    } else {
+        recyclableStatus.className = 'status danger';
+        recyclableStatus.textContent = '¡Casi lleno!';
+        recyclableGauge.style.stroke = '#f44336';
     }
 }
 
@@ -119,7 +120,7 @@ const statsChart = new Chart(ctx, {
         labels: [],
         datasets: [
             {
-                label: 'Nivel de Llenado (%)',
+                label: 'Basurero Orgánico (%)',
                 data: [],
                 borderColor: '#4CAF50',
                 backgroundColor: 'rgba(76, 175, 80, 0.1)',
@@ -127,7 +128,7 @@ const statsChart = new Chart(ctx, {
                 fill: true
             },
             {
-                label: 'Nivel de Agua (%)',
+                label: 'Basurero Reciclable (%)',
                 data: [],
                 borderColor: '#2196F3',
                 backgroundColor: 'rgba(33, 150, 243, 0.1)',
@@ -189,7 +190,7 @@ const usageChart = new Chart(usageCtx, {
 });
 
 // Actualizar el gráfico con nuevos datos
-function updateChart(fillLevel, waterLevel) {
+function updateChart(organicLevel, recyclableLevel) {
     const now = new Date();
     const timeString = now.toLocaleTimeString();
     
@@ -200,8 +201,8 @@ function updateChart(fillLevel, waterLevel) {
     }
     
     statsChart.data.labels.push(timeString);
-    statsChart.data.datasets[0].data.push(fillLevel);
-    statsChart.data.datasets[1].data.push(waterLevel);
+    statsChart.data.datasets[0].data.push(organicLevel);
+    statsChart.data.datasets[1].data.push(recyclableLevel);
     statsChart.update();
 }
 
@@ -220,16 +221,17 @@ socket.on('sensorData', (data) => {
     console.log('Datos recibidos:', data);
     
     // Actualizar UI con datos recibidos
-    if (data.water !== undefined) {
-        updateWaterGauge(data.water);
+    if (data.distanceOrganic !== undefined) {
+        updateOrganicGauge(data.distanceOrganic);
     }
     
-    if (data.distance !== undefined) {
-        updateFillGauge(data.distance);
+    if (data.distanceRecyclable !== undefined) {
+        updateRecyclableGauge(data.distanceRecyclable);
         
         // Actualizar gráfico
-        const fillLevel = (1 - (data.distance / 50)) * 100;
-        updateChart(fillLevel, data.water || 0);
+        const organicLevel = (1 - (data.distanceOrganic / 50)) * 100;
+        const recyclableLevel = (1 - (data.distanceRecyclable / 50)) * 100;
+        updateChart(organicLevel, recyclableLevel);
     }
     
     if (data.objectDetected !== undefined) {
@@ -241,7 +243,7 @@ socket.on('sensorData', (data) => {
     }
     
     // Registrar datos recibidos
-    addLogEntry(`Agua: ${Math.round(data.water)}%, Distancia: ${Math.round(data.distance)}cm, Objeto: ${data.objectDetected ? 'Sí' : 'No'}`);
+    addLogEntry(`Orgánico: ${Math.round((1 - (data.distanceOrganic / 50)) * 100)}%, Reciclable: ${Math.round((1 - (data.distanceRecyclable / 50)) * 100)}%, Objeto: ${data.objectDetected ? 'Sí' : 'No'}`);
 });
 
 // Manejar actualizaciones de estadísticas
@@ -261,7 +263,7 @@ socket.on('statsUpdate', (stats) => {
 });
 
 // Inicialización
-updateWaterGauge(0);
-updateFillGauge(50);
+updateOrganicGauge(50);
+updateRecyclableGauge(50);
 updateObjectDetection(false);
 addLogEntry('Sistema iniciado, esperando datos...');
