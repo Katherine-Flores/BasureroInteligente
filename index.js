@@ -19,7 +19,8 @@ app.get('/', (req, res) => {
 // Variables para almacenar los últimos datos de los sensores
 let lastData = {
   water: 0,
-  distance: 50,
+  distanceOrganic: 50,    // Distancia del basurero orgánico
+  distanceRecyclable: 50, // Distancia del basurero reciclable
   objectDetected: false,
   isOrganic: false
 };
@@ -40,8 +41,12 @@ setInterval(() => {
   lastData.water += (Math.random() * 10) - 5;
   lastData.water = Math.min(Math.max(lastData.water, 0), 100);
   
-  lastData.distance -= (Math.random() * 2) - 0.5;
-  lastData.distance = Math.min(Math.max(lastData.distance, 5), 50);
+  // Simular cambio en distancia para ambos basureros
+  lastData.distanceOrganic -= (Math.random() * 2) - 0.5;
+  lastData.distanceOrganic = Math.min(Math.max(lastData.distanceOrganic, 5), 50);
+  
+  lastData.distanceRecyclable -= (Math.random() * 2) - 0.5;
+  lastData.distanceRecyclable = Math.min(Math.max(lastData.distanceRecyclable, 5), 50);
   
   // Probabilidad de detección de objeto
   if (Math.random() > 0.7) {
@@ -98,11 +103,19 @@ function parseSerialData(data) {
     }
   }
   
-  // Extraer distancia
-  if (data.includes('Distancia:')) {
-    const match = data.match(/Distancia: (\d+)/);
+  // Extraer distancia del basurero orgánico
+  if (data.includes('Distancia Orgánico:')) {
+    const match = data.match(/Distancia Orgánico: (\d+)/);
     if (match && match[1]) {
-      lastData.distance = parseInt(match[1], 10);
+      lastData.distanceOrganic = parseInt(match[1], 10);
+    }
+  }
+  
+  // Extraer distancia del basurero reciclable
+  if (data.includes('Distancia Reciclable:')) {
+    const match = data.match(/Distancia Reciclable: (\d+)/);
+    if (match && match[1]) {
+      lastData.distanceRecyclable = parseInt(match[1], 10);
     }
   }
   
