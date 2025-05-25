@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basurero Inteligente - Dashboard</title>
+    <title>Basurero Inteligente</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -231,7 +231,7 @@
 <body>
     <header>
         <div class="container">
-            <h1><i class="fas fa-recycle"></i> Basurero Inteligente - Dashboard</h1>
+            <h1><i class="fas fa-recycle"></i> Basurero Inteligente</h1>
         </div>
     </header>
     
@@ -239,35 +239,35 @@
         <div class="dashboard-grid">
             <div class="card">
                 <div class="card-header">
-                    <i class="fas fa-water"></i>
-                    <h2>Nivel de Agua</h2>
+                    <i class="fas fa-seedling"></i>
+                    <h2>Basurero Orgánico</h2>
                 </div>
                 <div class="card-content">
                     <div class="gauge">
                         <svg viewBox="0 0 100 50">
-                            <path id="water-gauge-bg" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#ddd" stroke-width="5" />
-                            <path id="water-gauge" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#2196F3" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="126" />
+                            <path id="organic-gauge-bg" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#ddd" stroke-width="5" />
+                            <path id="organic-gauge" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#4CAF50" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="126" />
                         </svg>
-                        <div class="gauge-value" id="water-value">0%</div>
+                        <div class="gauge-value" id="organic-value">0%</div>
                     </div>
-                    <div class="status success" id="water-status">Normal</div>
+                    <div class="status success" id="organic-status">Disponible</div>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <i class="fas fa-arrows-alt-v"></i>
-                    <h2>Nivel de Llenado</h2>
+                    <i class="fas fa-trash-alt"></i>
+                    <h2>Basurero Reciclable</h2>
                 </div>
                 <div class="card-content">
                     <div class="gauge">
                         <svg viewBox="0 0 100 50">
-                            <path id="fill-gauge-bg" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#ddd" stroke-width="5" />
-                            <path id="fill-gauge" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#4CAF50" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="126" />
+                            <path id="recyclable-gauge-bg" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#ddd" stroke-width="5" />
+                            <path id="recyclable-gauge" d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="#2196F3" stroke-width="5" stroke-dasharray="126" stroke-dashoffset="126" />
                         </svg>
-                        <div class="gauge-value" id="fill-value">0%</div>
+                        <div class="gauge-value" id="recyclable-value">0%</div>
                     </div>
-                    <div class="status success" id="fill-status">Disponible</div>
+                    <div class="status success" id="recyclable-status">Disponible</div>
                 </div>
             </div>
             
@@ -287,7 +287,7 @@
             <div class="card stats-card">
                 <div class="card-header">
                     <i class="fas fa-chart-line"></i>
-                    <h2>Estadísticas de Llenado</h2>
+                    <h2>Estadísticas de Llenado por Basurero</h2>
                 </div>
                 <div class="card-content">
                     <div class="chart-container">
